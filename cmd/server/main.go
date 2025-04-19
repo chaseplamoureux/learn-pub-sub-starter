@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
+	"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"os"
 	"os/signal"
-
-	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
@@ -20,6 +21,16 @@ func main() {
 	}
 	defer connection.Close()
 	fmt.Println("connection to rabbitMQ server successful")
+
+	channel, err := connection.Channel()
+	if err != nil {
+		log.Fatalf("could not open channel %v", err)
+	}
+	err = pubsub.PublishJSON(channel, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: true})
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+	fmt.Println("message sent")
 
 	// wait for ctrl+c
 	signalChan := make(chan os.Signal, 1)
